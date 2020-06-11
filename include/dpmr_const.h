@@ -15,23 +15,25 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
- * NXDN AMBE interleave schedule
- */
 
 #ifndef _MAIN
-extern const int nW[36];
-extern const int nX[36];
-extern const int nY[36];
-extern const int nZ[36];
+extern const int dPmrW[36];
+extern const int dPmrX[36];
+extern const int dPmrY[36];
+extern const int dPmrZ[36];
 
 #else
-
-const int nW[36] = { 0, 1, 0, 1, 0, 1,
+/*
+ * dPMR AMBE interleave schedule
+ */
+// bit 1
+const int dPmrW[36] = {
+  0, 1, 0, 1, 0, 1,
   0, 1, 0, 1, 0, 1,
   0, 1, 0, 1, 0, 1,
   0, 1, 0, 1, 0, 2,
@@ -39,7 +41,8 @@ const int nW[36] = { 0, 1, 0, 1, 0, 1,
   0, 2, 0, 2, 0, 2
 };
 
-const int nX[36] = { 23, 10, 22, 9, 21, 8,
+const int dPmrX[36] = {
+  23, 10, 22, 9, 21, 8,
   20, 7, 19, 6, 18, 5,
   17, 4, 16, 3, 15, 2,
   14, 1, 13, 0, 12, 10,
@@ -47,7 +50,9 @@ const int nX[36] = { 23, 10, 22, 9, 21, 8,
   8, 6, 7, 5, 6, 4
 };
 
-const int nY[36] = { 0, 2, 0, 2, 0, 2,
+// bit 0
+const int dPmrY[36] = {
+  0, 2, 0, 2, 0, 2,
   0, 2, 0, 3, 0, 3,
   1, 3, 1, 3, 1, 3,
   1, 3, 1, 3, 1, 3,
@@ -55,7 +60,8 @@ const int nY[36] = { 0, 2, 0, 2, 0, 2,
   1, 3, 1, 3, 1, 3
 };
 
-const int nZ[36] = { 5, 3, 4, 2, 3, 1,
+const int dPmrZ[36] = {
+  5, 3, 4, 2, 3, 1,
   2, 0, 1, 13, 0, 12,
   22, 11, 21, 10, 20, 9,
   19, 8, 18, 7, 17, 6,

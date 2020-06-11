@@ -24,8 +24,7 @@
 
 
 
-void
-processLDU2 (dsd_opts * opts, dsd_state * state)
+void processLDU2 (dsd_opts * opts, dsd_state * state)
 {
   // extracts IMBE frames from LDU frame
   int i;
@@ -51,9 +50,9 @@ processLDU2 (dsd_opts * opts, dsd_state * state)
   status_count = 21;
 
   if (opts->errorbars == 1)
-    {
-      printf ("e:");
-    }
+  {
+    printf ("e:");
+  }
 
   // IMBE 1
 #ifdef TRACE_DSD
@@ -151,30 +150,30 @@ processLDU2 (dsd_opts * opts, dsd_state * state)
     char cyclic_parity[8];
 
     for (i=0; i<=6; i+=2)
-      {
-        read_dibit(opts, state, lsd+i, &status_count, NULL, NULL);
-      }
+    {
+      read_dibit(opts, state, lsd+i, &status_count, NULL, NULL);
+    }
     for (i=0; i<=6; i+=2)
-      {
-        read_dibit(opts, state, cyclic_parity+i, &status_count, NULL, NULL);
-      }
+    {
+      read_dibit(opts, state, cyclic_parity+i, &status_count, NULL, NULL);
+    }
     for (i=0; i<8; i++)
-      {
-        lsd1[i] = lsd[i] + '0';
-      }
+    {
+      lsd1[i] = lsd[i] + '0';
+    }
 
     for (i=0; i<=6; i+=2)
-      {
-        read_dibit(opts, state, lsd+i, &status_count, NULL, NULL);
-      }
+    {
+      read_dibit(opts, state, lsd+i, &status_count, NULL, NULL);
+    }
     for (i=0; i<=6; i+=2)
-      {
-        read_dibit(opts, state, cyclic_parity+i, &status_count, NULL, NULL);
-      }
+    {
+      read_dibit(opts, state, cyclic_parity+i, &status_count, NULL, NULL);
+    }
     for (i=0; i<8; i++)
-      {
-        lsd2[i] = lsd[i] + '0';
-      }
+    {
+      lsd2[i] = lsd[i] + '0';
+    }
 
     // TODO: error correction of the LSD bytes...
     // TODO: do something useful with the LSD bytes...
@@ -187,57 +186,61 @@ processLDU2 (dsd_opts * opts, dsd_state * state)
   process_IMBE (opts, state, &status_count);
 
   if (opts->errorbars == 1)
-    {
-      printf ("\n");
-    }
+  {
+    printf ("\n");
+  }
 
   if (opts->p25status == 1)
-    {
-      printf ("lsd1: %s lsd2: %s\n", lsd1, lsd2);
-    }
+  {
+    printf ("lsd1: %s lsd2: %s\n", lsd1, lsd2);
+  }
 
   // trailing status symbol
   {
-      int status;
-      status = getDibit (opts, state) + '0';
-      // TODO: do something useful with the status bits...
+    int status = 0;
+
+    /* Remove warning compiler */
+    UNUSED_VARIABLE(status);
+
+    status = getDibit (opts, state) + '0';
+    // TODO: do something useful with the status bits...
   }
 
   // Error correct the hex_data using Reed-Solomon hex_parity
   irrecoverable_errors = check_and_fix_reedsolomon_24_16_9((char*)hex_data, (char*)hex_parity);
   if (irrecoverable_errors == 1)
-    {
-      state->debug_header_critical_errors++;
+  {
+    state->debug_header_critical_errors++;
 
-      // We can correct (9-1)/2 = 4 errors. If we failed, it means that there were more than 4 errors in
-      // these 12+12 words. But take into account that each hex word was already error corrected with
-      // Hamming(10,6,3), which can correct 1 bits on each sequence of (6+4) bits. We could say that there
-      // were 5 errors of 2 bits.
-      update_error_stats(&state->p25_heuristics, 12*6+12*6, 5*2);
-    }
+    // We can correct (9-1)/2 = 4 errors. If we failed, it means that there were more than 4 errors in
+    // these 12+12 words. But take into account that each hex word was already error corrected with
+    // Hamming(10,6,3), which can correct 1 bits on each sequence of (6+4) bits. We could say that there
+    // were 5 errors of 2 bits.
+    update_error_stats(&state->p25_heuristics, 12*6+12*6, 5*2);
+  }
   else
-    {
-      // Same comments as in processHDU. See there.
+  {
+    // Same comments as in processHDU. See there.
 
-      char fixed_parity[8*6];
+    char fixed_parity[8*6];
 
-      // Correct the dibits that we read according with hex_data values
-      correct_hamming_dibits((char*)hex_data, 16, analog_signal_array);
+    // Correct the dibits that we read according with hex_data values
+    correct_hamming_dibits((char*)hex_data, 16, analog_signal_array);
 
-      // Generate again the Reed-Solomon parity
-      encode_reedsolomon_24_16_9((char*)hex_data, fixed_parity);
+    // Generate again the Reed-Solomon parity
+    encode_reedsolomon_24_16_9((char*)hex_data, fixed_parity);
 
-      // Correct the dibits that we read according with the fixed parity values
-      correct_hamming_dibits(fixed_parity, 8, analog_signal_array+16*(3+2));
+    // Correct the dibits that we read according with the fixed parity values
+    correct_hamming_dibits(fixed_parity, 8, analog_signal_array+16*(3+2));
 
-      // Once corrected, contribute this information to the heuristics module
-      contribute_to_heuristics(state->rf_mod, &(state->p25_heuristics), analog_signal_array, 16*(3+2)+8*(3+2));
-    }
+    // Once corrected, contribute this information to the heuristics module
+    contribute_to_heuristics(state->rf_mod, &(state->p25_heuristics), analog_signal_array, 16*(3+2)+8*(3+2));
+  }
 
 
 #ifdef HEURISTICS_DEBUG
   printf("(audio errors, header errors, critical header errors) (%i,%i,%i)\n",
-          state->debug_audio_errors, state->debug_header_errors, state->debug_header_critical_errors);
+      state->debug_audio_errors, state->debug_header_errors, state->debug_header_critical_errors);
 #endif
 
   // Now put the corrected data into the DSD structures
@@ -362,9 +365,9 @@ processLDU2 (dsd_opts * opts, dsd_state * state)
 
 
   if (opts->p25enc == 1)
-    {
-      algidhex = strtol (algid, NULL, 2);
-      kidhex = strtol (kid, NULL, 2);
-      printf ("mi: %s algid: $%x kid: $%x\n", mi, algidhex, kidhex);
-    }
+  {
+    algidhex = strtol (algid, NULL, 2);
+    kidhex = strtol (kid, NULL, 2);
+    printf ("mi: %s algid: $%x kid: $%x\n", mi, algidhex, kidhex);
+  }
 }

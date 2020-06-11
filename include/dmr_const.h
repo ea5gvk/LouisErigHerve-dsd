@@ -15,6 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _MAIN
 extern const int rW[36];
 extern const int rX[36];
@@ -61,4 +65,8 @@ const int rZ[36] = {
   13, 2, 12, 1, 11, 0
 };
 
+#endif /* _MAIN */
+
+#ifdef __cplusplus
+}
 #endif

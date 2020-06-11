@@ -15,6 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  *  dstar interleave experiments 
  */
@@ -126,4 +130,8 @@ const int dX[72] = {
 		1, 13,
 };
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

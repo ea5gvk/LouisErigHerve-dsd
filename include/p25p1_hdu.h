@@ -2,6 +2,9 @@
 #ifndef P25P1_HDU_H_9f95c3a5072842e8aaf94444e1452d20
 #define P25P1_HDU_H_9f95c3a5072842e8aaf94444e1452d20
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "p25p1_heuristics.h"
 
@@ -70,4 +73,8 @@ void read_golay24_parity (dsd_opts* opts, dsd_state* state, char* parity, int* s
 void read_zeros(dsd_opts* opts, dsd_state* state, AnalogSignal* analog_signal_array, unsigned int length,
         int* status_count, int new_sequence);
 
-#endif // P25P1_HDU_H_9f95c3a5072842e8aaf94444e1452d20
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* P25P1_HDU_H_9f95c3a5072842e8aaf94444e1452d20 */

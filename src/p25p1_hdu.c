@@ -21,11 +21,12 @@
 #include "p25p1_check_hdu.h"
 #include "p25p1_heuristics.h"
 
-int
-read_dibit (dsd_opts* opts, dsd_state* state, char* output, int* status_count, int* analog_signal, int* did_read_status)
+int read_dibit (dsd_opts* opts, dsd_state* state, char* output, int* status_count, int* analog_signal, int* did_read_status)
 {
     int dibit;
-    int status;
+    int status = 0;
+
+    UNUSED_VARIABLE(status);
 
     if (*status_count == 35) {
 
@@ -60,50 +61,45 @@ read_dibit (dsd_opts* opts, dsd_state* state, char* output, int* status_count, i
     return dibit;
 }
 
-void
-read_dibit_update_analog_data (dsd_opts* opts, dsd_state* state, char* output, unsigned int count, int* status_count,
-        AnalogSignal* analog_signal_array, int* analog_signal_index)
+void read_dibit_update_analog_data (dsd_opts* opts, dsd_state* state, char* output, unsigned int count, int* status_count,
+                                    AnalogSignal* analog_signal_array, int* analog_signal_index)
 {
   unsigned int i;
-  unsigned int debug_left, debug_right;
 
   for (i=0; i<count; i+=2)
+  {
+    // We read two bits on each call
+    int analog_signal;
+    int did_read_status;
+    int dibit;
+
+    dibit = read_dibit(opts, state, output + i, status_count, &analog_signal, &did_read_status);
+
+    if (analog_signal_array != NULL)
     {
-      // We read two bits on each call
-      int analog_signal;
-      int did_read_status;
-      int dibit;
-
-      dibit = read_dibit(opts, state, output + i, status_count, &analog_signal, &did_read_status);
-
-      if (analog_signal_array != NULL)
-        {
-          // Fill up the AnalogSignal struct
-          analog_signal_array[*analog_signal_index].value = analog_signal;
-          analog_signal_array[*analog_signal_index].dibit = dibit;
-          analog_signal_array[*analog_signal_index].sequence_broken = did_read_status;
-          (*analog_signal_index)++;
-        }
+      // Fill up the AnalogSignal struct
+      analog_signal_array[*analog_signal_index].value = analog_signal;
+      analog_signal_array[*analog_signal_index].dibit = dibit;
+      analog_signal_array[*analog_signal_index].sequence_broken = did_read_status;
+      (*analog_signal_index)++;
     }
+  }
 }
 
-void
-read_word (dsd_opts* opts, dsd_state* state, char* word, unsigned int length, int* status_count,
-        AnalogSignal* analog_signal_array, int* analog_signal_index)
+void read_word (dsd_opts* opts, dsd_state* state, char* word, unsigned int length, int* status_count,
+                AnalogSignal* analog_signal_array, int* analog_signal_index)
 {
   read_dibit_update_analog_data(opts, state, word, length, status_count, analog_signal_array, analog_signal_index);
 }
 
-void
-read_golay24_parity (dsd_opts* opts, dsd_state* state, char* parity, int* status_count,
-        AnalogSignal* analog_signal_array, int* analog_signal_index)
+void read_golay24_parity (dsd_opts* opts, dsd_state* state, char* parity, int* status_count,
+                          AnalogSignal* analog_signal_array, int* analog_signal_index)
 {
   read_dibit_update_analog_data(opts, state, parity, 12, status_count, analog_signal_array, analog_signal_index);
 }
 
-void
-read_hamm_parity (dsd_opts* opts, dsd_state* state, char* parity, int* status_count,
-        AnalogSignal* analog_signal_array, int* analog_signal_index)
+void read_hamm_parity (dsd_opts* opts, dsd_state* state, char* parity, int* status_count,
+                       AnalogSignal* analog_signal_array, int* analog_signal_index)
 {
   // Read 2 dibits = read 4 bits.
   read_dibit_update_analog_data(opts, state, parity, 4, status_count, analog_signal_array, analog_signal_index);
@@ -112,8 +108,7 @@ read_hamm_parity (dsd_opts* opts, dsd_state* state, char* parity, int* status_co
 /**
  * Corrects a hex (6 bit) word  using the Golay 24 FEC.
  */
-static void
-correct_hex_word (dsd_state* state, char* hex, char* parity)
+static void correct_hex_word (dsd_state* state, char* hex, char* parity)
 {
   int fixed_errors;
   int irrecoverable_errors;
@@ -122,17 +117,16 @@ correct_hex_word (dsd_state* state, char* hex, char* parity)
 
   state->debug_header_errors += fixed_errors;
   if (irrecoverable_errors != 0)
-    {
-      state->debug_header_critical_errors++;
-    }
+  {
+    state->debug_header_critical_errors++;
+  }
 }
 
 /**
  * Reads an hex word, its parity bits and attempts to error correct it using the Golay24 algorithm.
  */
-static void
-read_and_correct_hex_word (dsd_opts* opts, dsd_state* state, char* hex, int* status_count,
-        AnalogSignal* analog_signal_array, int* analog_signal_index)
+static void read_and_correct_hex_word (dsd_opts* opts, dsd_state* state, char* hex, int* status_count,
+                                       AnalogSignal* analog_signal_array, int* analog_signal_index)
 {
   char parity[12];
 
@@ -154,8 +148,7 @@ read_and_correct_hex_word (dsd_opts* opts, dsd_state* state, char* hex, int* sta
  * \param hex_count The number of hex words in the sequence.
  * \param analog_signal_array A pointer to the AnalogSignal information for the sequence of hex words.
  */
-static void
-correct_golay_dibits_6(char* corrected_hex_data, int hex_count, AnalogSignal* analog_signal_array)
+static void correct_golay_dibits_6(char* corrected_hex_data, int hex_count, AnalogSignal* analog_signal_array)
 {
   int i, j;
   int analog_signal_index;
@@ -166,54 +159,53 @@ correct_golay_dibits_6(char* corrected_hex_data, int hex_count, AnalogSignal* an
   analog_signal_index = 0;
 
   for (i=hex_count-1; i>=0; i--)
+  {
+    for (j=0; j<6; j+=2)  // 3 iterations -> 3 dibits
     {
-      for (j=0; j<6; j+=2)  // 3 iterations -> 3 dibits
-        {
-          // Given the bits, calculates the dibit
-          dibit = (corrected_hex_data[i*6+j] << 1) | corrected_hex_data[i*6+j+1];
-          // Now we know the dibit we should have read from the signal
-          analog_signal_array[analog_signal_index].corrected_dibit = dibit;
+      // Given the bits, calculates the dibit
+      dibit = (corrected_hex_data[i*6+j] << 1) | corrected_hex_data[i*6+j+1];
+      // Now we know the dibit we should have read from the signal
+      analog_signal_array[analog_signal_index].corrected_dibit = dibit;
 
 #ifdef HEURISTICS_DEBUG
-          if (analog_signal_array[analog_signal_index].dibit != dibit)
-            {
-              printf("HDU data word corrected from %i to %i, analog value %i\n",
-                      analog_signal_array[analog_signal_index].dibit, dibit, analog_signal_array[analog_signal_index].value);
-            }
+      if (analog_signal_array[analog_signal_index].dibit != dibit)
+      {
+        printf("HDU data word corrected from %i to %i, analog value %i\n",
+            analog_signal_array[analog_signal_index].dibit, dibit, analog_signal_array[analog_signal_index].value);
+      }
 #endif
 
-          analog_signal_index++;
-        }
-
-      // Calculate the Golay 24 parity for the corrected hex word
-      encode_golay_24_6(corrected_hex_data+i*6, parity);
-
-      // Now we know the parity we should have read from the signal. Use this information
-      for (j=0; j<12; j+=2) // 6 iterations -> 6 dibits
-        {
-          // Given the bits, calculates the dibit
-          dibit = (parity[j] << 1) | parity[j+1];
-          // Now we know the dibit we should have read from the signal
-          analog_signal_array[analog_signal_index].corrected_dibit = dibit;
-
-#ifdef HEURISTICS_DEBUG
-          if (analog_signal_array[analog_signal_index].dibit != dibit)
-            {
-              printf("HDU parity corrected from %i to %i, analog value %i\n",
-                      analog_signal_array[analog_signal_index].dibit, dibit, analog_signal_array[analog_signal_index].value);
-            }
-#endif
-
-          analog_signal_index++;
-        }
+      analog_signal_index++;
     }
+
+    // Calculate the Golay 24 parity for the corrected hex word
+    encode_golay_24_6(corrected_hex_data+i*6, parity);
+
+    // Now we know the parity we should have read from the signal. Use this information
+    for (j=0; j<12; j+=2) // 6 iterations -> 6 dibits
+    {
+      // Given the bits, calculates the dibit
+      dibit = (parity[j] << 1) | parity[j+1];
+      // Now we know the dibit we should have read from the signal
+      analog_signal_array[analog_signal_index].corrected_dibit = dibit;
+
+#ifdef HEURISTICS_DEBUG
+      if (analog_signal_array[analog_signal_index].dibit != dibit)
+      {
+        printf("HDU parity corrected from %i to %i, analog value %i\n",
+            analog_signal_array[analog_signal_index].dibit, dibit, analog_signal_array[analog_signal_index].value);
+      }
+#endif
+
+      analog_signal_index++;
+    }
+  }
 }
 
 /**
  * The important method that processes a full P25 HD unit.
  */
-void
-processHDU(dsd_opts* opts, dsd_state* state)
+void processHDU(dsd_opts* opts, dsd_state* state)
 {
   char mi[73], mfid[9], algid[9], kid[17], tgid[17], tmpstr[255];
   int i, j;
@@ -221,7 +213,7 @@ processHDU(dsd_opts* opts, dsd_state* state)
   int algidhex, kidhex;
   char hex[6];
   int status_count;
-  int status;
+  int status = 0;
 
   char hex_data[20][6];    // Data in hex-words (6 bit words). A total of 20 hex words.
   char hex_parity[16][6];  // Parity of the data, again in hex-word format. A total of 16 parity hex words.
@@ -230,6 +222,8 @@ processHDU(dsd_opts* opts, dsd_state* state)
 
   AnalogSignal analog_signal_array[20*(3+6)+16*(3+6)];
   int analog_signal_index;
+
+  UNUSED_VARIABLE(status);
 
   analog_signal_index = 0;
 
@@ -240,64 +234,64 @@ processHDU(dsd_opts* opts, dsd_state* state)
 
   // Read 20 hex words, correct them using their Golay 24 parity data.
   for (i=19; i>=0; i--)
+  {
+    read_and_correct_hex_word (opts, state, hex, &status_count, analog_signal_array, &analog_signal_index);
+    // Store the corrected hex word into the hex_data store:
+    for (j=0; j<6; j++)
     {
-      read_and_correct_hex_word (opts, state, hex, &status_count, analog_signal_array, &analog_signal_index);
-      // Store the corrected hex word into the hex_data store:
-      for (j=0; j<6; j++)
-        {
-          hex_data[i][j] = hex[j];
-        }
+      hex_data[i][j] = hex[j];
     }
+  }
 
   // Read the 16 parity hex word. These are used to FEC the 20 hex words using Reed-Solomon.
   for (i=15; i>=0; i--)
+  {
+    read_and_correct_hex_word (opts, state, hex, &status_count, analog_signal_array, &analog_signal_index);
+    // Store the corrected hex word into the hex_parity store:
+    for (j=0; j<6; j++)
     {
-      read_and_correct_hex_word (opts, state, hex, &status_count, analog_signal_array, &analog_signal_index);
-      // Store the corrected hex word into the hex_parity store:
-      for (j=0; j<6; j++)
-        {
-          hex_parity[i][j] = hex[j];
-        }
+      hex_parity[i][j] = hex[j];
     }
+  }
   // Don't forget to mark the first element as the start of a new sequence
   analog_signal_array[0].sequence_broken = 1;
 
   // Use the Reed-Solomon algorithm to correct the data. hex_data is modified in place
   irrecoverable_errors = check_and_fix_redsolomon_36_20_17((char*)hex_data, (char*)hex_parity);
   if (irrecoverable_errors != 0)
-    {
-      // The hex words failed the Reed-Solomon check. There were too many errors. Still we can use this
-      // information to update an estimate of the BER.
-      state->debug_header_critical_errors++;
+  {
+    // The hex words failed the Reed-Solomon check. There were too many errors. Still we can use this
+    // information to update an estimate of the BER.
+    state->debug_header_critical_errors++;
 
-      // We can correct (17-1)/2 = 8 errors. If we failed, it means that there were more than 8 errors in
-      // these 20+16 words. But take into account that each hex word was already error corrected with
-      // Golay 24, which can correct 3 bits on each sequence of (6+12) bits. We could say that there were
-      // 9 errors of 4 bits.
-      update_error_stats(&state->p25_heuristics, 20*6+16*6, 9*4);
-    }
+    // We can correct (17-1)/2 = 8 errors. If we failed, it means that there were more than 8 errors in
+    // these 20+16 words. But take into account that each hex word was already error corrected with
+    // Golay 24, which can correct 3 bits on each sequence of (6+12) bits. We could say that there were
+    // 9 errors of 4 bits.
+    update_error_stats(&state->p25_heuristics, 20*6+16*6, 9*4);
+  }
   else
-    {
-      // The hex words passed the Reed-Solomon check. This means that very likely they are correct and we
-      // can trust that the digitizer did a good job with them. In other words, each analog value was
-      // correctly assigned to a dibit. This is extremely useful information for the digitizer and we are
-      // going to exploit it.
-      char fixed_parity[16*6];
+  {
+    // The hex words passed the Reed-Solomon check. This means that very likely they are correct and we
+    // can trust that the digitizer did a good job with them. In other words, each analog value was
+    // correctly assigned to a dibit. This is extremely useful information for the digitizer and we are
+    // going to exploit it.
+    char fixed_parity[16*6];
 
-      // Correct the dibits that we did read according with the newly corrected hex_data values
-      correct_golay_dibits_6((char*)hex_data, 20, analog_signal_array);
+    // Correct the dibits that we did read according with the newly corrected hex_data values
+    correct_golay_dibits_6((char*)hex_data, 20, analog_signal_array);
 
-      // Generate again the Reed-Solomon parity for the corrected data
-      encode_reedsolomon_36_20_17((char*)hex_data, fixed_parity);
+    // Generate again the Reed-Solomon parity for the corrected data
+    encode_reedsolomon_36_20_17((char*)hex_data, fixed_parity);
 
-      // Correct the dibits that we read according with the corrected parity values
-      correct_golay_dibits_6(fixed_parity, 16, analog_signal_array+20*(3+6));
+    // Correct the dibits that we read according with the corrected parity values
+    correct_golay_dibits_6(fixed_parity, 16, analog_signal_array+20*(3+6));
 
-      // Now we have a bunch of dibits (composed of data and parity of different kinds) that we trust are all
-      // correct. We also keep a record of the analog values from where each dibit is coming from.
-      // This information is gold for the heuristics module.
-      contribute_to_heuristics(state->rf_mod, &(state->p25_heuristics), analog_signal_array, 20*(3+6)+16*(3+6));
-    }
+    // Now we have a bunch of dibits (composed of data and parity of different kinds) that we trust are all
+    // correct. We also keep a record of the analog values from where each dibit is coming from.
+    // This information is gold for the heuristics module.
+    contribute_to_heuristics(state->rf_mod, &(state->p25_heuristics), analog_signal_array, 20*(3+6)+16*(3+6));
+  }
 
   // Now put the corrected data on the DSD structures
 
@@ -454,58 +448,58 @@ processHDU(dsd_opts* opts, dsd_state* state)
   //TODO: Do something useful with the status bits...
 
   if (opts->p25enc == 1)
-    {
-      algidhex = strtol (algid, NULL, 2);
-      kidhex = strtol (kid, NULL, 2);
-      printf ("mi: %s algid: $%x kid: $%x\n", mi, algidhex, kidhex);
-    }
+  {
+    algidhex = strtol (algid, NULL, 2);
+    kidhex = strtol (kid, NULL, 2);
+    printf ("mi: %s algid: $%x kid: $%x\n", mi, algidhex, kidhex);
+  }
   if (opts->p25lc == 1)
+  {
+    printf ("mfid: %s tgid: %s ", mfid, tgid);
+    if (opts->p25tg == 0)
     {
-      printf ("mfid: %s tgid: %s ", mfid, tgid);
-      if (opts->p25tg == 0)
-        {
-          printf ("\n");
-        }
+      printf ("\n");
     }
+  }
 
   j = 0;
   if (strcmp (mfid, "10010000") == 0)
+  {
+    for (i = 4; i < 16; i++)
     {
-      for (i = 4; i < 16; i++)
-        {
-          if (state->tgcount < 24)
-            {
-              state->tg[state->tgcount][j] = tgid[i];
-            }
-          tmpstr[j] = tgid[i];
-          j++;
-        }
-      tmpstr[12] = '0';
-      tmpstr[13] = '0';
-      tmpstr[14] = '0';
-      tmpstr[15] = '0';
+      if (state->tgcount < 24)
+      {
+        state->tg[state->tgcount][j] = tgid[i];
+      }
+      tmpstr[j] = tgid[i];
+      j++;
     }
+    tmpstr[12] = '0';
+    tmpstr[13] = '0';
+    tmpstr[14] = '0';
+    tmpstr[15] = '0';
+  }
   else
+  {
+    for (i = 0; i < 16; i++)
     {
-      for (i = 0; i < 16; i++)
-        {
-          if (state->tgcount < 24)
-            {
-              state->tg[state->tgcount][j] = tgid[i];
-            }
-          tmpstr[j] = tgid[i];
-          j++;
-        }
+      if (state->tgcount < 24)
+      {
+        state->tg[state->tgcount][j] = tgid[i];
+      }
+      tmpstr[j] = tgid[i];
+      j++;
     }
+  }
   tmpstr[16] = 0;
   talkgroup = strtol (tmpstr, NULL, 2);
   state->lasttg = talkgroup;
   if (state->tgcount < 24)
-    {
-      state->tgcount = state->tgcount + 1;
-    }
+  {
+    state->tgcount = state->tgcount + 1;
+  }
   if (opts->p25tg == 1)
-    {
-      printf ("tg: %li\n", talkgroup);
-    }
+  {
+    printf ("tg: %li\n", talkgroup);
+  }
 }

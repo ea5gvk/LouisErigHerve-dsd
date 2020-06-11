@@ -2,6 +2,10 @@
 #ifndef P25P1_LDU_H_a3c417fcb7804991b0e6d828066bd133
 #define P25P1_LDU_H_a3c417fcb7804991b0e6d828066bd133
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "dsd.h"
 
 #include "p25p1_hdu.h"
@@ -46,4 +50,9 @@ void correct_hamming_dibits(char* hex_data, int hex_count, AnalogSignal* analog_
  */
 void debug_ldu_header(dsd_state* state);
 
-#endif // P25P1_LDU_H_a3c417fcb7804991b0e6d828066bd133
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif /* P25P1_LDU_H_a3c417fcb7804991b0e6d828066bd133 */

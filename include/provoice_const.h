@@ -15,6 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _MAIN
 
 extern const int pW[142];
@@ -78,4 +82,9 @@ const int pX[142] = {
   22, 21, 20, 11, 2, 1,
   19, 18, 17, 8, 22
 };
+#endif /* _MAIN */
+
+#ifdef __cplusplus
+}
 #endif
+

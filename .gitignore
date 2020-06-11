@@ -4,3 +4,6 @@ dsd
 *.dylib
 build
 .DS_Store
+.cproject
+.project
+.settings

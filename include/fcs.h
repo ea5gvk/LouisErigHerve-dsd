@@ -1,5 +1,9 @@
 /* fcs.h */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Viterbi decoder using Traceback method. 
 
 // Original Source was written by Sho Tamaoki and Tom Wada
@@ -87,3 +91,9 @@ m_crc = (m_crc << 8) | (tmp >> 8 & 0xFF);
 // done
 return(m_crc);
 }; // end function 
+
+
+#ifdef __cplusplus
+}
+#endif
+

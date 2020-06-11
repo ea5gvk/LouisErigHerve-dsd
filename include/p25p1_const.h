@@ -15,6 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _MAIN
 
 extern const int iW[72];
@@ -86,4 +90,8 @@ const int iZ[72] = {
   1, 14, 3, 1, 22, 4,
   22, 12, 1, 22, 20, 2
 };
+#endif
+
+#ifdef __cplusplus
+}
 #endif

@@ -15,56 +15,25 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "dsd.h"
 
-/*
- * NXDN AMBE interleave schedule
- */
+void getCurrentTime (dsd_opts * opts, dsd_state * state)
+{
+  time_t rawtime;
+  struct tm * timeinfo = NULL;
 
-#ifndef _MAIN
-extern const int nW[36];
-extern const int nX[36];
-extern const int nY[36];
-extern const int nZ[36];
+  UNUSED_VARIABLE(opts);
 
-#else
+  /* Get the current time */
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
 
-const int nW[36] = { 0, 1, 0, 1, 0, 1,
-  0, 1, 0, 1, 0, 1,
-  0, 1, 0, 1, 0, 1,
-  0, 1, 0, 1, 0, 2,
-  0, 2, 0, 2, 0, 2,
-  0, 2, 0, 2, 0, 2
-};
+  /* Set the time parameter with the current time */
+  state->TimeYear   = timeinfo->tm_year + 1900;
+  state->TimeMonth  = timeinfo->tm_mon + 1;
+  state->TimeDay    = timeinfo->tm_mday;
+  state->TimeHour   = timeinfo->tm_hour;
+  state->TimeMinute = timeinfo->tm_min;
+  state->TimeSecond = timeinfo->tm_sec;
+} /* End getCurrentTime() */
 
-const int nX[36] = { 23, 10, 22, 9, 21, 8,
-  20, 7, 19, 6, 18, 5,
-  17, 4, 16, 3, 15, 2,
-  14, 1, 13, 0, 12, 10,
-  11, 9, 10, 8, 9, 7,
-  8, 6, 7, 5, 6, 4
-};
-
-const int nY[36] = { 0, 2, 0, 2, 0, 2,
-  0, 2, 0, 3, 0, 3,
-  1, 3, 1, 3, 1, 3,
-  1, 3, 1, 3, 1, 3,
-  1, 3, 1, 3, 1, 3,
-  1, 3, 1, 3, 1, 3
-};
-
-const int nZ[36] = { 5, 3, 4, 2, 3, 1,
-  2, 0, 1, 13, 0, 12,
-  22, 11, 21, 10, 20, 9,
-  19, 8, 18, 7, 17, 6,
-  16, 5, 15, 4, 14, 3,
-  13, 2, 12, 1, 11, 0
-};
-
-#endif
-
-#ifdef __cplusplus
-}
-#endif

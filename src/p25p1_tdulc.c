@@ -30,17 +30,16 @@
  * some algorithms.
  * \param dodeca The 12-bit word to reverse.
  */
-static void
-swap_hex_words_bits(char* dodeca)
+static void swap_hex_words_bits(char* dodeca)
 {
   int j;
   for(j=0; j<6; j++)
-    {
-      int swap;
-      swap = dodeca[j];
-      dodeca[j] = dodeca[j+6];
-      dodeca[j+6] = swap;
-    }
+  {
+    int swap;
+    swap = dodeca[j];
+    dodeca[j] = dodeca[j+6];
+    dodeca[j+6] = swap;
+  }
 }
 
 /**
@@ -48,23 +47,21 @@ swap_hex_words_bits(char* dodeca)
  * \param dodeca_data Pointer to the start of the 12-bit words sequence.
  * \param dodeca_parity Pointer to the parities sequence.
  */
-static void
-swap_hex_words(char* dodeca_data, char* dodeca_parity)
+static void swap_hex_words(char* dodeca_data, char* dodeca_parity)
 {
   int i;
   for(i=0; i<6; i++)
-    {
-      swap_hex_words_bits(dodeca_data + i*12);
-      swap_hex_words_bits(dodeca_parity + i*12);
-    }
+  {
+    swap_hex_words_bits(dodeca_data + i*12);
+    swap_hex_words_bits(dodeca_parity + i*12);
+  }
 }
 
 /**
  * Read an hex word, its parity bits and attempts to error correct it using the Hamming algorithm.
  */
-static void
-read_and_correct_dodeca_word (dsd_opts* opts, dsd_state* state, char* dodeca, int* status_count,
-        AnalogSignal* analog_signal_array, int* analog_signal_index)
+static void read_and_correct_dodeca_word (dsd_opts* opts, dsd_state* state, char* dodeca, int* status_count,
+                                          AnalogSignal* analog_signal_array, int* analog_signal_index)
 {
   char parity[12];
   int fixed_errors;
@@ -78,14 +75,14 @@ read_and_correct_dodeca_word (dsd_opts* opts, dsd_state* state, char* dodeca, in
 #ifdef TDULC_DEBUG
   printf("[");
   for (i = 0; i < 12; i++)
-    {
-      printf("%c", (dodeca[i] == 1)? 'X' : ' ');
-    }
+  {
+    printf("%c", (dodeca[i] == 1)? 'X' : ' ');
+  }
   printf("-");
   for (i = 0; i < 12; i++)
-    {
-      printf("%c", (parity[i] == 1)? 'X' : ' ');
-    }
+  {
+    printf("%c", (parity[i] == 1)? 'X' : ' ');
+  }
   printf("]");
 #endif
 
@@ -94,28 +91,28 @@ read_and_correct_dodeca_word (dsd_opts* opts, dsd_state* state, char* dodeca, in
 
   state->debug_header_errors += fixed_errors;
   if (irrecoverable_errors != 0)
-    {
-      state->debug_header_critical_errors++;
-    }
+  {
+    state->debug_header_critical_errors++;
+  }
 
 #ifdef TDULC_DEBUG
   printf(" -> [");
   for (i = 0; i < 12; i++)
-    {
-      printf("%c", (dodeca[i] == 1)? 'X' : ' ');
-    }
+  {
+    printf("%c", (dodeca[i] == 1)? 'X' : ' ');
+  }
   printf("]");
   if (irrecoverable_errors == 0)
+  {
+    if (fixed_errors > 0)
     {
-      if (fixed_errors > 0)
-        {
-          printf(" fixed!");
-        }
+      printf(" fixed!");
     }
+  }
   else
-    {
-      printf(" IRRECOVERABLE");
-    }
+  {
+    printf(" IRRECOVERABLE");
+  }
   printf("\n");
 #endif
 }
@@ -127,8 +124,7 @@ read_and_correct_dodeca_word (dsd_opts* opts, dsd_state* state, char* dodeca, in
  * \param count Number of words in the sequence.
  * \param analog_signal_array Pointer to a sequence of AnalogSignal elements, as many as the value of count.
  */
-static void
-correct_golay_dibits_12(char* data, int count, AnalogSignal* analog_signal_array)
+static void correct_golay_dibits_12(char* data, int count, AnalogSignal* analog_signal_array)
 {
   int i, j;
   int analog_signal_index;
@@ -139,47 +135,46 @@ correct_golay_dibits_12(char* data, int count, AnalogSignal* analog_signal_array
   analog_signal_index = 0;
 
   for (i=count-1; i>=0; i--)
+  {
+    for (j=0; j<12; j+=2)  // 6 iterations -> 6 dibits
     {
-      for (j=0; j<12; j+=2)  // 6 iterations -> 6 dibits
-        {
-          dibit = (data[i*12+j] << 1) | data[i*12+j+1];
-          analog_signal_array[analog_signal_index].corrected_dibit = dibit;
+      dibit = (data[i*12+j] << 1) | data[i*12+j+1];
+      analog_signal_array[analog_signal_index].corrected_dibit = dibit;
 
 #ifdef HEURISTICS_DEBUG
-          if (analog_signal_array[analog_signal_index].dibit != dibit)
-            {
-              printf("TDULC data word corrected from %i to %i, analog value %i\n",
-                      analog_signal_array[analog_signal_index].dibit, dibit, analog_signal_array[analog_signal_index].value);
-            }
+      if (analog_signal_array[analog_signal_index].dibit != dibit)
+      {
+        printf("TDULC data word corrected from %i to %i, analog value %i\n",
+            analog_signal_array[analog_signal_index].dibit, dibit, analog_signal_array[analog_signal_index].value);
+      }
 #endif
 
-          analog_signal_index++;
-        }
-
-      // Calculate the golay parity for the hex word
-      encode_golay_24_12(data+i*12, parity);
-
-      for (j=0; j<12; j+=2) // 6 iterations -> 6 dibits
-        {
-          dibit = (parity[j] << 1) | parity[j+1];
-          analog_signal_array[analog_signal_index].corrected_dibit = dibit;
-
-#ifdef HEURISTICS_DEBUG
-          if (analog_signal_array[analog_signal_index].dibit != dibit)
-            {
-              printf("TDULC parity corrected from %i to %i, analog value %i\n",
-                      analog_signal_array[analog_signal_index].dibit, dibit, analog_signal_array[analog_signal_index].value);
-            }
-#endif
-
-          analog_signal_index++;
-        }
+      analog_signal_index++;
     }
+
+    // Calculate the golay parity for the hex word
+    encode_golay_24_12(data+i*12, parity);
+
+    for (j=0; j<12; j+=2) // 6 iterations -> 6 dibits
+    {
+      dibit = (parity[j] << 1) | parity[j+1];
+      analog_signal_array[analog_signal_index].corrected_dibit = dibit;
+
+#ifdef HEURISTICS_DEBUG
+      if (analog_signal_array[analog_signal_index].dibit != dibit)
+      {
+        printf("TDULC parity corrected from %i to %i, analog value %i\n",
+            analog_signal_array[analog_signal_index].dibit, dibit, analog_signal_array[analog_signal_index].value);
+      }
+#endif
+
+      analog_signal_index++;
+    }
+  }
 }
 
-void
-read_zeros(dsd_opts* opts, dsd_state* state, AnalogSignal* analog_signal_array, unsigned int length,
-        int* status_count, int new_sequence)
+void read_zeros(dsd_opts* opts, dsd_state* state, AnalogSignal* analog_signal_array, unsigned int length,
+                int* status_count, int new_sequence)
 {
   char* buffer;
   unsigned int i;
@@ -190,28 +185,27 @@ read_zeros(dsd_opts* opts, dsd_state* state, AnalogSignal* analog_signal_array, 
   read_dibit_update_analog_data (opts, state, buffer, length, status_count, analog_signal_array, &analog_signal_index);
   free(buffer);
   if (new_sequence)
-    {
-      analog_signal_array[0].sequence_broken = 1;
-    }
+  {
+    analog_signal_array[0].sequence_broken = 1;
+  }
 
   for (i=0;i<length/2;i++)
-    {
-      analog_signal_array[i].corrected_dibit = 0;
+  {
+    analog_signal_array[i].corrected_dibit = 0;
 #ifdef HEURISTICS_DEBUG
-      if (analog_signal_array[i].corrected_dibit != analog_signal_array[i].dibit)
-        {
-          printf("TDULC ending zeros corrected from %i to %i, analog value %i\n",
-                  analog_signal_array[i].dibit, 0, analog_signal_array[i].value);
-        }
-#endif
+    if (analog_signal_array[i].corrected_dibit != analog_signal_array[i].dibit)
+    {
+      printf("TDULC ending zeros corrected from %i to %i, analog value %i\n",
+          analog_signal_array[i].dibit, 0, analog_signal_array[i].value);
     }
+#endif
+  }
 
   // We know that all these bits should be zero. Use this information for the heuristics module
   contribute_to_heuristics(state->rf_mod, &(state->p25_heuristics), analog_signal_array, length/2);
 }
 
-void
-processTDULC (dsd_opts* opts, dsd_state* state)
+void processTDULC (dsd_opts* opts, dsd_state* state)
 {
   int i;
   char lcinfo[57], lcformat[9], mfid[9];
@@ -234,12 +228,14 @@ processTDULC (dsd_opts* opts, dsd_state* state)
   // so we start counter at 36-14-1 = 21
   status_count = 21;
 
-  for(i=5; i>=0; i--) {
-      read_and_correct_dodeca_word (opts, state, &(dodeca_data[i][0]), &status_count, analog_signal_array, &analog_signal_index);
+  for(i=5; i>=0; i--)
+  {
+    read_and_correct_dodeca_word (opts, state, &(dodeca_data[i][0]), &status_count, analog_signal_array, &analog_signal_index);
   }
 
-  for(i=5; i>=0; i--) {
-      read_and_correct_dodeca_word (opts, state, &(dodeca_parity[i][0]), &status_count, analog_signal_array, &analog_signal_index);
+  for(i=5; i>=0; i--)
+  {
+    read_and_correct_dodeca_word (opts, state, &(dodeca_parity[i][0]), &status_count, analog_signal_array, &analog_signal_index);
   }
 
   // Swap the two 6-bit words to accommodate for the expected word order of the Reed-Solomon decoding
@@ -252,38 +248,38 @@ processTDULC (dsd_opts* opts, dsd_state* state)
   swap_hex_words((char*)dodeca_data, (char*)dodeca_parity);
 
   if (irrecoverable_errors == 1)
-    {
-      state->debug_header_critical_errors++;
+  {
+    state->debug_header_critical_errors++;
 
-      // We can correct (13-1)/2 = 6 errors. If we failed, it means that there were more than 6 errors in
-      // these 12+12 words. But take into account that each hex word was already error corrected with
-      // Golay 24, which can correct 3 bits on each sequence of (12+12) bits. We could say that there were
-      // 7 errors of 4 bits.
-      update_error_stats(&state->p25_heuristics, 12*6+12*6, 7*4);
+    // We can correct (13-1)/2 = 6 errors. If we failed, it means that there were more than 6 errors in
+    // these 12+12 words. But take into account that each hex word was already error corrected with
+    // Golay 24, which can correct 3 bits on each sequence of (12+12) bits. We could say that there were
+    // 7 errors of 4 bits.
+    update_error_stats(&state->p25_heuristics, 12*6+12*6, 7*4);
 
-    }
+  }
   else
-    {
-      // Same comments as in processHDU. See there.
+  {
+    // Same comments as in processHDU. See there.
 
-      char fixed_parity[6*12];
+    char fixed_parity[6*12];
 
-      // Correct the dibits that we read according with hex_data values
-      correct_golay_dibits_12((char*)dodeca_data, 6, analog_signal_array);
+    // Correct the dibits that we read according with hex_data values
+    correct_golay_dibits_12((char*)dodeca_data, 6, analog_signal_array);
 
-      // Generate again the Reed-Solomon parity
-      // Now, swap again for Reed-Solomon
-      swap_hex_words((char*)dodeca_data, (char*)dodeca_parity);
-      encode_reedsolomon_24_12_13((char*)dodeca_data, fixed_parity);
-      // Swap again to recover the original order
-      swap_hex_words((char*)dodeca_data, fixed_parity);
+    // Generate again the Reed-Solomon parity
+    // Now, swap again for Reed-Solomon
+    swap_hex_words((char*)dodeca_data, (char*)dodeca_parity);
+    encode_reedsolomon_24_12_13((char*)dodeca_data, fixed_parity);
+    // Swap again to recover the original order
+    swap_hex_words((char*)dodeca_data, fixed_parity);
 
-      // Correct the dibits that we read according with the fixed parity values
-      correct_golay_dibits_12(fixed_parity, 6, analog_signal_array+6*(6+6));
+    // Correct the dibits that we read according with the fixed parity values
+    correct_golay_dibits_12(fixed_parity, 6, analog_signal_array+6*(6+6));
 
-      // Once corrected, contribute this information to the heuristics module
-      analog_signal_array[0].sequence_broken = 1;
-      contribute_to_heuristics(state->rf_mod, &(state->p25_heuristics), analog_signal_array, 6*(6+6)+6*(6+6));
+    // Once corrected, contribute this information to the heuristics module
+    analog_signal_array[0].sequence_broken = 1;
+    contribute_to_heuristics(state->rf_mod, &(state->p25_heuristics), analog_signal_array, 6*(6+6)+6*(6+6));
   }
 
 
@@ -292,15 +288,20 @@ processTDULC (dsd_opts* opts, dsd_state* state)
   read_zeros(opts, state, analog_signal_array + 6*(6+6)+6*(6+6), 20, &status_count, irrecoverable_errors);
 
   // Next we should find an status dibit
-  if (status_count != 35) {
-      printf("*** SYNC ERROR\n");
+  if (status_count != 35)
+  {
+    printf("*** SYNC ERROR\n");
   }
 
   // trailing status symbol
   {
-      int status;
-      status = getDibit (opts, state) + '0';
-      // TODO: do something useful with the status bits...
+    int status = 0;
+
+    /* Remove warning compiler */
+    UNUSED_VARIABLE(status);
+
+    status = getDibit (opts, state) + '0';
+    // TODO: do something useful with the status bits...
   }
 
   // Put the corrected data into the DSD structures

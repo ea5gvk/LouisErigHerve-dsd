@@ -29,15 +29,20 @@
 
 void processDSTAR(dsd_opts * opts, dsd_state * state) {
 	// extracts AMBE frames from D-STAR voice frame
-	int i, j, dibit;
+	int i = 0, j = 0, dibit = 0;
 	char ambe_fr[4][24];
-	unsigned char data[9];
-	unsigned int bits[4];
+	unsigned char data[9] = {0};
+	unsigned int bits[4] = {0};
 	int framecount;
 	int sync_missed = 0;
 	unsigned char slowdata[4];
 	unsigned int bitbuffer = 0;
 	const int *w, *x;
+
+	UNUSED_VARIABLE(i);
+	UNUSED_VARIABLE(j);
+	UNUSED_VARIABLE(data[0]);
+	UNUSED_VARIABLE(bits[0]);
 
 	if (opts->errorbars == 1) {
 		printf("e:");
@@ -142,22 +147,26 @@ void processDSTAR(dsd_opts * opts, dsd_state * state) {
 	}
 }
 
-void processDSTAR_HD(dsd_opts * opts, dsd_state * state) {
+void processDSTAR_HD(dsd_opts * opts, dsd_state * state)
+{
 
-	int i, j;
-	int radioheaderbuffer[660];
+  int i = 0, j;
+  int radioheaderbuffer[660];
 
-	for (j = 0; j < 660; j++) {
-					radioheaderbuffer[j] = getDibit(opts, state);
-			}
+  UNUSED_VARIABLE(i);
 
-	// Note: These routines contain GPLed code. Remove if you object to that.
-	// Due to this, they are in a separate source file.
-	dstar_header_decode(radioheaderbuffer);
+  for (j = 0; j < 660; j++)
+  {
+    radioheaderbuffer[j] = getDibit(opts, state);
+  }
 
-	//We officially have sync now, so just pass on to the above routine:
+  // Note: These routines contain GPLed code. Remove if you object to that.
+  // Due to this, they are in a separate source file.
+  dstar_header_decode(radioheaderbuffer);
 
-	processDSTAR(opts, state);
+  //We officially have sync now, so just pass on to the above routine:
+
+  processDSTAR(opts, state);
 
 }
 

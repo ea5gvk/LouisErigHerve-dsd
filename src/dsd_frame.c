@@ -22,31 +22,29 @@
 
 #include "p25p1_check_nid.h"
 
-void
-printFrameInfo (dsd_opts * opts, dsd_state * state)
+void printFrameInfo (dsd_opts * opts, dsd_state * state)
 {
 
   int level;
 
   level = (int) state->max / 164;
   if (opts->verbose > 0)
-    {
-      printf ("inlvl: %2i%% ", level);
-    }
+  {
+    printf ("inlvl: %2i%% ", level);
+  }
   if (state->nac != 0)
-    {
-      printf ("nac: %4X ", state->nac);
-    }
+  {
+    printf ("nac: %4X ", state->nac);
+  }
 
   if (opts->verbose > 1)
-    {
-      printf ("src: %8i ", state->lastsrc);
-    }
+  {
+    printf ("src: %8i ", state->lastsrc);
+  }
   printf ("tg: %5i ", state->lasttg);
 }
 
-void
-processFrame (dsd_opts * opts, dsd_state * state)
+void processFrame (dsd_opts * opts, dsd_state * state)
 {
 
   int i, j, dibit;
@@ -54,7 +52,7 @@ processFrame (dsd_opts * opts, dsd_state * state)
   char nac[13];
   int level;
 
-  char status_0;
+  char status_0 = 0;
   char bch_code[63];
   int index_bch_code;
   unsigned char parity;
@@ -63,187 +61,261 @@ processFrame (dsd_opts * opts, dsd_state * state)
   char new_duid[3];
   int check_result;
 
+  UNUSED_VARIABLE(status_0);
+
   nac[12] = 0;
   duid[2] = 0;
   j = 0;
 
-  if (state->rf_mod == 1)
-    {
-      state->maxref = (int)(state->max * 0.80F);
-      state->minref = (int)(state->min * 0.80F);
-    }
+  if (state->rf_mod == QPSK_MODE)
+  {
+    state->maxref = (int)(state->max * 0.80F);
+    state->minref = (int)(state->min * 0.80F);
+  }
   else
-    {
-      state->maxref = state->max;
-      state->minref = state->min;
-    }
+  {
+    state->maxref = state->max;
+    state->minref = state->min;
+  }
 
+  /* Frame sync type
+   *  0 = +P25p1
+   *  1 = -P25p1
+   *  2 = +X2-TDMA (non inverted signal data frame)
+   *  3 = -X2-TDMA (inverted signal voice frame)
+   *  4 = +X2-TDMA (non inverted signal voice frame)
+   *  5 = -X2-TDMA (inverted signal data frame)
+   *  6 = +D-STAR
+   *  7 = -D-STAR
+   *  8 = +NXDN (non inverted voice frame)
+   *  9 = -NXDN (inverted voice frame)
+   * 10 = +DMR (non inverted signal data frame)
+   * 11 = -DMR (inverted signal voice frame)
+   * 12 = +DMR (non inverted signal voice frame)
+   * 13 = -DMR (inverted signal data frame)
+   * 14 = +ProVoice
+   * 15 = -ProVoice
+   * 16 = +NXDN (non inverted data frame)
+   * 17 = -NXDN (inverted data frame)
+   * 18 = +D-STAR_HD
+   * 19 = -D-STAR_HD
+   * 20 = +dPMR Frame Sync 1
+   * 21 = +dPMR Frame Sync 2
+   * 22 = +dPMR Frame Sync 3
+   * 23 = +dPMR Frame Sync 4
+   * 24 = -dPMR Frame Sync 1
+   * 25 = -dPMR Frame Sync 2
+   * 26 = -dPMR Frame Sync 3
+   * 27 = -dPMR Frame Sync 4
+   */
   if ((state->synctype == 8) || (state->synctype == 9))
+  {
+    state->rf_mod = GFSK_MODE;
+    state->nac = 0;
+    state->lastsrc = 0;
+    state->lasttg = 0;
+    if (opts->errorbars == 1)
     {
-      state->rf_mod = 2;
-      state->nac = 0;
-      state->lastsrc = 0;
-      state->lasttg = 0;
-      if (opts->errorbars == 1)
-        {
-          if (opts->verbose > 0)
-            {
-              level = (int) state->max / 164;
-              printf ("inlvl: %2i%% ", level);
-            }
-        }
-      state->nac = 0;
-      if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
-        {
-          openMbeOutFile (opts, state);
-        }
-      sprintf (state->fsubtype, " VOICE        ");
-      processNXDNVoice (opts, state);
-      return;
+      if (opts->verbose > 0)
+      {
+        level = (int) state->max / 164;
+        printf ("inlvl: %2i%% ", level);
+      }
     }
+    state->nac = 0;
+    if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
+    {
+      openMbeOutFile (opts, state);
+    }
+    sprintf (state->fsubtype, " VOICE        ");
+    processNXDNVoice (opts, state);
+    return;
+  }
   else if ((state->synctype == 16) || (state->synctype == 17))
+  {
+    state->rf_mod = GFSK_MODE;
+    state->nac = 0;
+    state->lastsrc = 0;
+    state->lasttg = 0;
+    if (opts->errorbars == 1)
     {
-      state->rf_mod = 2;
-      state->nac = 0;
-      state->lastsrc = 0;
-      state->lasttg = 0;
-      if (opts->errorbars == 1)
-        {
-          if (opts->verbose > 0)
-            {
-              level = (int) state->max / 164;
-              printf ("inlvl: %2i%% ", level);
-            }
-        }
-      state->nac = 0;
-      if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
-        {
-          openMbeOutFile (opts, state);
-        }
-      sprintf (state->fsubtype, " DATA         ");
-      processNXDNData (opts, state);
-      return;
+      if (opts->verbose > 0)
+      {
+        level = (int) state->max / 164;
+        printf ("inlvl: %2i%% ", level);
+      }
     }
+    state->nac = 0;
+    if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
+    {
+      openMbeOutFile (opts, state);
+    }
+    sprintf (state->fsubtype, " DATA         ");
+    processNXDNData (opts, state);
+    return;
+  }
   else if ((state->synctype == 6) || (state->synctype == 7))
+  {
+    state->nac = 0;
+    state->lastsrc = 0;
+    state->lasttg = 0;
+    if (opts->errorbars == 1)
     {
-      state->nac = 0;
-      state->lastsrc = 0;
-      state->lasttg = 0;
-      if (opts->errorbars == 1)
-        {
-          if (opts->verbose > 0)
-            {
-              level = (int) state->max / 164;
-              printf ("inlvl: %2i%% ", level);
-            }
-        }
-      state->nac = 0;
-      if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
-        {
-          openMbeOutFile (opts, state);
-        }
-      sprintf (state->fsubtype, " VOICE        ");
-      processDSTAR (opts, state);
-      return;
+      if (opts->verbose > 0)
+      {
+        level = (int) state->max / 164;
+        printf ("inlvl: %2i%% ", level);
+      }
     }
+    state->nac = 0;
+    if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
+    {
+      openMbeOutFile (opts, state);
+    }
+    sprintf (state->fsubtype, " VOICE        ");
+    processDSTAR (opts, state);
+    return;
+  }
   else if ((state->synctype == 18) || (state->synctype == 19))
+  {
+    state->nac = 0;
+    state->lastsrc = 0;
+    state->lasttg = 0;
+    if (opts->errorbars == 1)
     {
-      state->nac = 0;
-      state->lastsrc = 0;
-      state->lasttg = 0;
-      if (opts->errorbars == 1)
-        {
-          if (opts->verbose > 0)
-            {
-              level = (int) state->max / 164;
-              printf ("inlvl: %2i%% ", level);
-            }
-        }
-      state->nac = 0;
-      if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
-        {
-          openMbeOutFile (opts, state);
-        }
-      sprintf (state->fsubtype, " DATA         ");
-      processDSTAR_HD (opts, state);
-      return;
+      if (opts->verbose > 0)
+      {
+        level = (int) state->max / 164;
+        printf ("inlvl: %2i%% ", level);
+      }
     }
+    state->nac = 0;
+    if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
+    {
+      openMbeOutFile (opts, state);
+    }
+    sprintf (state->fsubtype, " DATA         ");
+    processDSTAR_HD (opts, state);
+    return;
+  }
 
   else if ((state->synctype >= 10) && (state->synctype <= 13))
+  {
+    state->nac = 0;
+    state->lastsrc = 0;
+    state->lasttg = 0;
+    if (opts->errorbars == 1)
     {
-      state->nac = 0;
-      state->lastsrc = 0;
-      state->lasttg = 0;
-      if (opts->errorbars == 1)
-        {
-          if (opts->verbose > 0)
-            {
-              level = (int) state->max / 164;
-              printf ("inlvl: %2i%% ", level);
-            }
-        }
-      if ((state->synctype == 11) || (state->synctype == 12))
-        {
-          if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
-            {
-              openMbeOutFile (opts, state);
-            }
-          sprintf (state->fsubtype, " VOICE        ");
-          processDMRvoice (opts, state);
-        }
-      else
-        {
-          closeMbeOutFile (opts, state);
-          state->err_str[0] = 0;
-          processDMRdata (opts, state);
-        }
-      return;
+      if (opts->verbose > 0)
+      {
+        level = (int) state->max / 164;
+        printf ("inlvl: %2i%% ", level);
+      }
     }
-  else if ((state->synctype >= 2) && (state->synctype <= 5))
+    if ((state->synctype == 11) || (state->synctype == 12))
     {
-      state->nac = 0;
-      if (opts->errorbars == 1)
-        {
-          printFrameInfo (opts, state);
-        }
-      if ((state->synctype == 3) || (state->synctype == 4))
-        {
-          if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
-            {
-              openMbeOutFile (opts, state);
-            }
-          sprintf (state->fsubtype, " VOICE        ");
-          processX2TDMAvoice (opts, state);
-        }
-      else
-        {
-          closeMbeOutFile (opts, state);
-          state->err_str[0] = 0;
-          processX2TDMAdata (opts, state);
-        }
-      return;
-    }
-  else if ((state->synctype == 14) || (state->synctype == 15))
-    {
-      state->nac = 0;
-      state->lastsrc = 0;
-      state->lasttg = 0;
-      if (opts->errorbars == 1)
-        {
-          if (opts->verbose > 0)
-            {
-              level = (int) state->max / 164;
-              printf ("inlvl: %2i%% ", level);
-            }
-        }
       if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
-        {
-          openMbeOutFile (opts, state);
-        }
+      {
+        openMbeOutFile (opts, state);
+      }
       sprintf (state->fsubtype, " VOICE        ");
-      processProVoice (opts, state);
+      processDMRvoice (opts, state);
+    }
+    else
+    {
+      closeMbeOutFile (opts, state);
+      state->err_str[0] = 0;
+      processDMRdata (opts, state);
+    }
+    return;
+  }
+  else if ((state->synctype >= 2) && (state->synctype <= 5))
+  {
+    state->nac = 0;
+    if (opts->errorbars == 1)
+    {
+      printFrameInfo (opts, state);
+    }
+    if ((state->synctype == 3) || (state->synctype == 4))
+    {
+      if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
+      {
+        openMbeOutFile (opts, state);
+      }
+      sprintf (state->fsubtype, " VOICE        ");
+      processX2TDMAvoice (opts, state);
+    }
+    else
+    {
+      closeMbeOutFile (opts, state);
+      state->err_str[0] = 0;
+      processX2TDMAdata (opts, state);
+    }
+    return;
+  }
+  else if ((state->synctype == 14) || (state->synctype == 15))
+  {
+    state->nac = 0;
+    state->lastsrc = 0;
+    state->lasttg = 0;
+    if (opts->errorbars == 1)
+    {
+      if (opts->verbose > 0)
+      {
+        level = (int) state->max / 164;
+        printf ("inlvl: %2i%% ", level);
+      }
+    }
+    if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
+    {
+      openMbeOutFile (opts, state);
+    }
+    sprintf (state->fsubtype, " VOICE        ");
+    processProVoice (opts, state);
+    return;
+  }
+  else if ((state->synctype == 20) || (state->synctype == 24))
+  {
+    /* dPMR Frame Sync 1 */
+    printf("dPMR Frame sync 1 ");
+  }
+  else if ((state->synctype == 21) || (state->synctype == 25))
+  {
+    /* dPMR Frame Sync 2 */
+    printf("dPMR Frame sync 2 ");
+    {
+      state->rf_mod = GFSK_MODE;
+      state->nac = 0;
+      state->lastsrc = 0;
+      state->lasttg = 0;
+      if (opts->errorbars == 1)
+      {
+        if (opts->verbose > 0)
+        {
+          level = (int) state->max / 164;
+          printf ("inlvl: %2i%% ", level);
+        }
+      }
+      state->nac = 0;
+      if ((opts->mbe_out_dir[0] != 0) && (opts->mbe_out_f == NULL))
+      {
+        openMbeOutFile (opts, state);
+      }
+      sprintf (state->fsubtype, " VOICE        ");
+      processdPMRvoice (opts, state);
       return;
     }
+  }
+  else if ((state->synctype == 22) || (state->synctype == 26))
+  {
+    /* dPMR Frame Sync 3 */
+    printf("dPMR Frame sync 3 ");
+  }
+  else if ((state->synctype == 23) || (state->synctype == 27))
+  {
+    /* dPMR Frame Sync 4 */
+    printf("dPMR Frame sync 4 ");
+  }
   else
     {
       // Read the NAC, 12 bits
@@ -568,4 +640,5 @@ processFrame (dsd_opts * opts, dsd_state * state)
           printf (" duid:%s *Unknown DUID*\n", duid);
         }
     }
-}
+
+} /* End processFrame() */

@@ -31,6 +31,9 @@
 // Version 20111106: initial release
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 #include <stdio.h>
@@ -294,5 +297,7 @@ for (loop=0; loop < 660; loop++) {
 }; // end function scramble
 
 
-
+#ifdef __cplusplus
+}
+#endif
 

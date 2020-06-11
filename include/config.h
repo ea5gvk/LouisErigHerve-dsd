@@ -15,6 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /*
  * System target
  */
@@ -30,3 +35,8 @@
 //#define NXDN_DUMP
 //#define UPSAMPLE_DEBUG
 //#define PROVOICE_DUMP
+
+#ifdef __cplusplus
+}
+#endif
+

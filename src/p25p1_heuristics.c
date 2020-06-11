@@ -240,17 +240,17 @@ static float evaluate_pdf(SymbolHeuristics* se, int value)
 /**
  * Logging of the internal PDF values for a given analog value and previous dibit.
  */
-static void debug_log_pdf(P25Heuristics* heuristics, int previous_dibit, int analog_value)
-{
-    int i;
-    float pdfs[4];
-
-    for (i=0; i<4; i++) {
-        pdfs[i] = evaluate_pdf(&(heuristics->symbols[previous_dibit][i]), analog_value);
-    }
-
-    printf("v: %i, (%e, %e, %e, %e)\n", analog_value, pdfs[0], pdfs[1], pdfs[2], pdfs[3]);
-}
+//static void debug_log_pdf(P25Heuristics* heuristics, int previous_dibit, int analog_value)
+//{
+//    int i;
+//    float pdfs[4];
+//
+//    for (i=0; i<4; i++) {
+//        pdfs[i] = evaluate_pdf(&(heuristics->symbols[previous_dibit][i]), analog_value);
+//    }
+//
+//    printf("v: %i, (%e, %e, %e, %e)\n", analog_value, pdfs[0], pdfs[1], pdfs[2], pdfs[3]);
+//}
 
 int estimate_symbol(int rf_mod, P25Heuristics* heuristics, int previous_dibit, int analog_value, int* dibit)
 {
@@ -315,7 +315,7 @@ int estimate_symbol(int rf_mod, P25Heuristics* heuristics, int previous_dibit, i
 static void debug_print_symbol_heuristics(int previous_dibit, int dibit, SymbolHeuristics* sh)
 {
     float mean, sd;
-    int k;
+    //int k;
     int n;
 
     n = sh->count;
